@@ -396,39 +396,37 @@ services:
       - EIP_DB_PASSWORD=${EIP_DB_PASSWORD}
       - EIP_DB_HOST=mysql
       - EIP_DB_PORT=3306
+      - RESULTS_ENCOUNTER_TYPE_UUID=${RESULTS_ENCOUNTER_TYPE_UUID}
+      - CONCEPT_COMPLEX_UUID=${CONCEPT_COMPLEX_UUID}
+      - OPENMRS_IDENTIFIER_TYPE_UUD=${OPENMRS_IDENTIFIER_TYPE_UUD}
+      - DB_EVENT_DESTINATIONS=${DB_EVENT_DESTINATIONS}
+      - CREATE_CUSTOMER_IF_NOT_EXIST=${CREATE_CUSTOMER_IF_NOT_EXIST}
+      - SENAITE_URL=http://senaite:8080
     networks:
       bahmni:
         aliases:
           - eip-client
 
-  openelis:
-    image: mekomsolutions/openelis:bahmni_latest
-    restart: unless-stopped
-    depends_on:
-      - postgresql
-    environment:
-      OPENELIS_DB_HOST: postgresql
-      OPENMRS_HOST: openmrs
-      OPENMRS_USER: ${OPENMRS_USER}
-      OPENMRS_DB_SERVER: mysql
-      OPENMRS_DB_PASSWORD: ${OPENMRS_DB_PASSWORD}
-      OPENMRS_DB_USERNAME: ${OPENMRS_DB_USER}
-      OPENMRS_PASSWORD: ${OPENMRS_PASSWORD}
-      OPENELIS_DB_USER: ${OPENELIS_DB_USER}
-      OPENELIS_DB_PASSWORD: ${OPENELIS_DB_PASSWORD}
-      OPENELIS_DB_NAME: ${OPENELIS_DB_NAME}
-      ATOMFEED_PROPERTIES_FILE_PATH: ${ATOMFEED_PROPERTIES_FILE_PATH:-/usr/local/tomcat/.OpenELIS/atomfeed.properties}
-      HIBERNATE_PROPERTIES_FILE_PATH: ${HIBERNATE_PROPERTIES_FILE_PATH:-/usr/local/tomcat/.OpenELIS/hibernate.properties}
-    healthcheck:
-      test: "exit 0"
+  senaite:
+    image: mekomsolutions/senaite:latest
+    environment: 
+      - SITE=senaite
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=admin
+    volumes:
+    - /workspace/ozone-distro/target/ozone-distro-1.0.0-SNAPSHOT/senaite_config/data:/data/importdata/senaite
+    - senaite-filestorage:/data/filestorage
+    - senaite-blobstorage:/data/blobstorage
+    ports:
+    - "8082:8080"
     networks:
       bahmni:
         aliases:
-          - openelis
-    volumes:
-      - ./properties/openelis/:/etc/properties/
+          - senaite
 
 volumes:
+  senaite-blobstorage: ~
+  senaite-filestorage: ~
   proxy-tls-certs: ~
   openmrs-data: ~
   mysql-data: ~
