@@ -189,6 +189,30 @@ services:
       - "${MYSQL_DATADIR:-mysql-data}:/var/lib/mysql"
       - "${SQL_SCRIPTS_PATH:-./sqls}/mysql:/docker-entrypoint-initdb.d"
 
+  # MySQL
+  mysql-private:
+    image: "mariadb:10.3"
+    restart: unless-stopped
+    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --log-bin --binlog-format=ROW  --server-id=2"
+    environment:
+      MYSQL_DATABASE: openmrs
+      MYSQL_USER: ${OPENMRS_DB_USER}
+      MYSQL_PASSWORD: ${OPENMRS_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      EIP_DB_NAME: ${EIP_DB_NAME}
+      EIP_DB_USER: ${EIP_DB_USER}
+      EIP_DB_PASSWORD: ${EIP_DB_PASSWORD}
+    healthcheck:
+      test: "exit 0"
+    networks:
+      bahmni:
+        aliases:
+          - mysql-private
+    volumes:
+      - "${MYSQL_DATADIR2:-mysql-data-private}:/var/lib/mysql"
+      - "${SQL_SCRIPTS_PATH:-./sqls}/mysql:/docker-entrypoint-initdb.d"
+
+
   # Bahmni Reports: Standalone Java app to provide Reporting capabilities
   bahmni-reports:
     image: mekomsolutions/bahmni-reports:bahmni_latest
@@ -371,6 +395,8 @@ services:
       - ADDONS=sale_management,stock,account_account,odoo_initializer,mrp,purchase,mrp_product_expiry,product_expiry,l10n_generic_coa
       - INITIALIZER_DATA_FILES_PATH=/mnt/odoo_config
       - INITIALIZER_CONFIG_FILE_PATH=/mnt/odoo_config/initializer_config.json
+    ports:
+      - 8079:8069
     networks:
       bahmni:
         aliases:
@@ -433,9 +459,9 @@ services:
     image: mekomsolutions/eip-client
     restart: unless-stopped
     volumes:
-      - "${EIP_CLIENT_CONFIG_PATH:-eip-client-config}:/config"
-      - "${EIP_CLIENT_ROUTES_PATH:-eip-client-routes}:/routes"
-      - "${EIP_HOME_PATH:-eip-home}:/eip-home"
+      - "${EIP_CLIENT_CONFIG_PATH2:-eip-client-config2}:/config"
+      - "${EIP_CLIENT_ROUTES_PATH2:-eip-client-routes2}:/routes"
+      - "${EIP_HOME_PATH2:-eip-home2}:/eip-home"
     environment:
       - MYSQL_DATABASE=openmrs
       - MYSQL_USER=${OPENMRS_DB_USER}
@@ -460,10 +486,10 @@ services:
       - MYSQL_ADMIN_USER_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - SPRING_MNGT_USER=${EIP_SPRING_USER:-name}
       - SPRING_MNGT_PASSWORD=${EIP_SPRING_PASSWORD:-password}
-      - EIP_DB_NAME=${EIP_DB_NAME}
+      - EIP_DB_NAME=openmrs_eip_mngt
       - EIP_DB_USER=${EIP_DB_USER}
       - EIP_DB_PASSWORD=${EIP_DB_PASSWORD}
-      - EIP_DB_HOST=mysql
+      - EIP_DB_HOST=mysql-private
       - EIP_DB_PORT=3306
     networks:
       bahmni:
@@ -519,7 +545,13 @@ volumes:
   eip-home: ~
   eip-client-config: ~
   eip-client-routes: ~
+  eip-home2: ~
+  eip-client-config2: ~
+  eip-client-routes2: ~
   odoo-checksums: ~
   bahmni-images: ~
+  odoo-filestore2: ~
+  odoo-checksums2: ~
+  mysql-data-private: ~
 networks:
   bahmni:
